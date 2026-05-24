@@ -1,0 +1,31 @@
+---
+- name: Check if Datadog Agent is already installed
+  ansible.builtin.command: datadog-agent version
+  register: monitoring_datadog_datadog_agent_installed
+  changed_when: false
+  failed_when: false
+
+- name: Install Datadog Agent when missing
+  ansible.builtin.include_role:
+    name: datadog.dd.agent
+  when: monitoring_datadog_datadog_agent_installed.rc != 0
+
+- name: Ensure Datadog http_check config directory exists
+  ansible.builtin.file:
+    path: /etc/datadog-agent/conf.d/http_check.d
+    state: directory
+    mode: "0755"
+
+- name: Configure Datadog HTTP health check for Redmine
+  ansible.builtin.template:
+    src: http_check.yaml.j2
+    dest: /etc/datadog-agent/conf.d/http_check.d/conf.yaml
+    mode: "0644"
+  when: datadog_checks is defined and datadog_checks.http_check is defined
+  notify: Restart Datadog Agent
+
+- name: Ensure Datadog Agent service is enabled and running
+  ansible.builtin.service:
+    name: datadog-agent
+    state: started
+    enabled: true

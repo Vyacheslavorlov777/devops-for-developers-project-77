@@ -1,0 +1,10 @@
+---
+redmine_db_password: "{{ vault_redmine_db_password }}"
+datadog_checks:
+  http_check:
+    init_config: {}
+    instances:
+      - name: redmine-http-local
+        url: "http://127.0.0.1:{{ redmine_port }}/"
+        timeout: 5
+        method: get

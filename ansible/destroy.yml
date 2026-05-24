@@ -1,0 +1,53 @@
+---
+- name: Tear down Redmine and node_exporter on webservers
+  hosts: webservers
+  become: true
+  roles:
+    - docker
+  tasks:
+    - name: Stop/remove Redmine container
+      community.docker.docker_container:
+        name: "{{ redmine_container_name }}"
+        state: absent
+
+    - name: Remove Redmine working directory
+      ansible.builtin.file:
+        path: /opt/redmine
+        state: absent
+
+- name: Drop PostgreSQL objects and remove node_exporter on dbservers
+  hosts: dbservers
+  become: true
+  tasks:
+    - name: Drop Redmine database (if exists)
+      ansible.builtin.command:
+        cmd: sudo -u postgres psql -tAc "DROP DATABASE IF EXISTS {{ redmine_db_name }};"
+      changed_when: false
+
+    - name: Drop Redmine user (if exists)
+      ansible.builtin.command:
+        cmd: sudo -u postgres psql -tAc "DROP ROLE IF EXISTS {{ redmine_db_user }};"
+      changed_when: false
+
+- name: Remove Nginx LB and Prometheus on lbservers
+  hosts: lbservers
+  become: true
+  tasks:
+    - name: Disable Redmine LB site
+      ansible.builtin.file:
+        path: /etc/nginx/sites-enabled/redmine-lb.conf
+        state: absent
+    - name: Remove LB config file
+      ansible.builtin.file:
+        path: /etc/nginx/sites-available/redmine-lb.conf
+        state: absent
+
+    - name: Remove self-signed SSL material
+      ansible.builtin.file:
+        path: /etc/nginx/ssl
+        state: absent
+
+    - name: Reload nginx
+      ansible.builtin.service:
+        name: nginx
+        state: reloaded

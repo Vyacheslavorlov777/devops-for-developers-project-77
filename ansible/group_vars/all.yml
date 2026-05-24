@@ -1,0 +1,34 @@
+---
+pip_install_packages:
+  - name: docker
+
+# App container settings (project-74 image)
+redmine_image: "mamboota/devops-for-developers-project-74:latest"
+redmine_image_archive_local_path: "/tmp/project74-image.tar"
+redmine_image_archive_remote_path: "/tmp/project74-image.tar"
+redmine_port: 80
+redmine_container_port: 8080
+redmine_container_name: "project74-app"
+redmine_restart_policy: "unless-stopped"
+redmine_domain: "myproj76.ru"
+
+# Datadog agent settings (key comes from Ansible Vault)
+datadog_api_key: "{{ vault_datadog_api_key }}"
+datadog_site: "datadoghq.com"
+
+# DB settings
+# Supported values for redmine_db_adapter: postgresql, mysql
+redmine_db_adapter: "postgresql"
+redmine_db_host: "192.168.2.4"
+redmine_db_port: 5432
+redmine_db_name: "redmine"
+redmine_db_user: "redmine"
+
+# Optional SMTP settings for notifications
+# redmine_smtp_enabled: true
+# redmine_smtp_address: "smtp.example.com"
+# redmine_smtp_port: "587"
+# redmine_smtp_user_name: "user"
+# redmine_smtp_password: "password"
+# redmine_smtp_domain: "example.com"
+# redmine_smtp_authentication: "login"

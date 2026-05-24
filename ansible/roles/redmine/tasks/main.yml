@@ -1,0 +1,90 @@
+---
+- name: Validate database adapter
+  ansible.builtin.assert:
+    that:
+      - redmine_db_adapter in ['postgresql', 'mysql']
+    fail_msg: "redmine_db_adapter must be either 'postgresql' or 'mysql'"
+
+- name: Create Redmine working directory
+  ansible.builtin.file:
+    path: /opt/redmine
+    state: directory
+    mode: "0755"
+
+- name: Render Redmine environment file
+  ansible.builtin.template:
+    src: redmine.env.j2
+    dest: /opt/redmine/.env
+    mode: "0600"
+
+- name: Prepare application image tarball on control node
+  block:
+    - name: Inspect application image on control node
+      community.docker.docker_image_info:
+        name: "{{ redmine_image }}"
+      delegate_to: localhost
+      become: false
+      run_once: true
+      register: redmine_image_local
+
+    - name: Pull application image on control node
+      community.docker.docker_image_pull:
+        name: "{{ redmine_image }}"
+      delegate_to: localhost
+      become: false
+      run_once: true
+      when: redmine_image_local.images | length == 0
+
+    - name: Export application image to tarball on control node
+      community.docker.docker_image_export:
+        names:
+          - "{{ redmine_image }}"
+        path: "{{ redmine_image_archive_local_path }}"
+      delegate_to: localhost
+      become: false
+      run_once: true
+
+- name: Inspect application image on web host
+  community.docker.docker_image_info:
+    name: "{{ redmine_image }}"
+  register: redmine_image_on_web
+
+- name: Copy image archive to web host
+  ansible.builtin.copy:
+    src: "{{ redmine_image_archive_local_path }}"
+    dest: "{{ redmine_image_archive_remote_path }}"
+    mode: "0644"
+  when: redmine_image_on_web.images | length == 0
+
+- name: Load application image from archive on web host
+  community.docker.docker_image_load:
+    path: "{{ redmine_image_archive_remote_path }}"
+  when: redmine_image_on_web.images | length == 0
+
+- name: Start or update Redmine container
+  community.docker.docker_container:
+    name: "{{ redmine_container_name }}"
+    image: "{{ redmine_image }}"
+    pull: false
+    restart_policy: "{{ redmine_restart_policy }}"
+    env_file: /opt/redmine/.env
+    published_ports:
+      - "{{ redmine_port }}:{{ redmine_container_port }}"
+    state: started
+
+- name: Wait until Redmine port is reachable
+  ansible.builtin.wait_for:
+    host: 127.0.0.1
+    port: "{{ redmine_port }}"
+    timeout: 60
+
+- name: Check Redmine health endpoint
+  ansible.builtin.uri:
+    url: "http://127.0.0.1:{{ redmine_port }}/"
+    method: GET
+    return_content: false
+    status_code: [200, 301, 302]
+  register: redmine_healthcheck
+  retries: 10
+  delay: 5
+  until: redmine_healthcheck.status in [200, 301, 302]

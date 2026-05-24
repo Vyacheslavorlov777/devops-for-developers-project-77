@@ -1,0 +1,37 @@
+# Пример для VPS (публичный IP, куда указывает A-запись домена).
+# TLS терминируется здесь; трафик в локальный стек идёт через reverse SSH tunnel
+# на 127.0.0.1:18080 (см. make relay-up в корневом Makefile).
+#
+# На VPS в sshd_config должно быть разрешено пробрасывание портов, например:
+#   AllowTcpForwarding yes
+# (по умолчанию на многих дистрибутивах уже так; смотри /etc/ssh/sshd_config)
+#
+# После правок: sudo nginx -t && sudo systemctl reload nginx
+# Сертификат: sudo certbot --nginx -d myproj76.ru ...
+
+server {
+    listen 80;
+    listen [::]:80;
+    server_name myproj76.ru;
+    return 301 https://$host$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
+    server_name myproj76.ru;
+
+    # Пути к сертификатам Let's Encrypt (после certbot подставятся свои):
+    ssl_certificate     /etc/letsencrypt/live/myproj76.ru/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/myproj76.ru/privkey.pem;
+
+    location / {
+        proxy_pass http://127.0.0.1:18080;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto https;
+        proxy_read_timeout 120s;
+    }
+}

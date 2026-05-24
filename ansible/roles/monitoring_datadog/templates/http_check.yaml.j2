@@ -1,0 +1,8 @@
+init_config:
+instances:
+{% for instance in datadog_checks.http_check.instances %}
+  - name: {{ instance.name }}
+    url: {{ instance.url }}
+    timeout: {{ instance.timeout | default(5) }}
+    method: {{ instance.method | default("get") }}
+{% endfor %}

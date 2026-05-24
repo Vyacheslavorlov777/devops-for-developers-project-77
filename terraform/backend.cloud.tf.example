@@ -1,0 +1,11 @@
+# Скопируй в terraform/backend.tf (файл в .gitignore), если нужен Terraform Cloud.
+# В CI Hexlet уже есть backend "local"; свой cloud {} в git ломает сборку (конфликт backend).
+terraform {
+  cloud {
+    organization = "StudentProj"
+
+    workspaces {
+      name = "project-77"
+    }
+  }
+}

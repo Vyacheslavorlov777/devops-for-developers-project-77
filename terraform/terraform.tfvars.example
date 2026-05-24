@@ -1,0 +1,15 @@
+# Скопируй в terraform.tfvars (файл в .gitignore).
+#
+# load_balancer_ip — публичный IP VPS, на который указывает A-запись домена
+# (схема как в project-76: HTTPS на VPS, туннель на локальный lb-1:80).
+# НЕ подставляй сюда 192.168.x.x lb-1 для проверки DNS в Terraform.
+#
+# redmine_domain   = "myproj76.ru"
+# load_balancer_ip = "168.222.143.207"
+#
+# ansible_inventory_path      = "../ansible/inventory.ini"
+# ansible_playbook_deploy     = "../ansible/playbook.yml"
+# ansible_playbook_destroy    = "../ansible/destroy.yml"
+# vault_password_file         = "../.vault_pass"
+#
+# Ключи Datadog для Terraform-провайдера — в terraform/secrets.auto.tfvars (см. secrets.auto.tfvars.example).
