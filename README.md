@@ -1,6 +1,6 @@
 ### Hexlet tests and linter status
 
-[![Actions Status](https://github.com/MamBoota/devops-for-developers-project-77/actions/workflows/hexlet-check.yml/badge.svg)](https://github.com/MamBoota/devops-for-developers-project-77/actions)
+[![Actions Status](https://github.com/Vyacheslavorlov777/devops-for-developers-project-77/actions/workflows/hexlet-check.yml/badge.svg)](https://github.com/MamBoota/devops-for-developers-project-77/actions)
 
 # DevOps for Developers — Project 77
 
